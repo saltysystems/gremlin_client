@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2022, Oleg Malyavkin
+# Copyright (c) 2018 - 2023, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # DEBUG_TAB redefine this "  " if you need, example: const DEBUG_TAB = "\t"
-const DEBUG_TAB : String = "  "
 
-const  PROTO_VERSION = 3
+const PROTO_VERSION = 0
+
+const DEBUG_TAB : String = "  "
 
 enum PB_ERR {
 	NO_ERRORS = 0,
@@ -350,11 +351,6 @@ class PBPacker:
 				elif typeof(field.value[0]) == TYPE_OBJECT:
 					for v in field.value:
 						var obj : PackedByteArray = v.to_bytes()
-						#if obj != null && obj.size() > 0:
-						#	data.append_array(pack_length_delimeted(type, field.tag, obj))
-						#else:
-						#	data = PackedByteArray()
-						#	return data
 						data.append_array(pack_length_delimeted(type, field.tag, obj))
 					return data
 			else:
@@ -369,9 +365,6 @@ class PBPacker:
 						return pack_length_delimeted(type, field.tag, data)
 				elif typeof(field.value) == TYPE_OBJECT:
 					var obj : PackedByteArray = field.value.to_bytes()
-					#if obj != null && obj.size() > 0:
-					#	data.append_array(obj)
-					#	return pack_length_delimeted(type, field.tag, data)
 					if obj.size() > 0:
 						data.append_array(obj)
 					return pack_length_delimeted(type, field.tag, data)
@@ -591,16 +584,16 @@ class PBPacker:
 		elif field.type == PB_DATA_TYPE.BYTES:
 			result += "<"
 			for i in range(value.size()):
-				result += String(value[i])
+				result += str(value[i])
 				if i != (value.size() - 1):
 					result += ", "
 			result += ">"
 		elif field.type == PB_DATA_TYPE.STRING:
 			result += "\"" + value + "\""
 		elif field.type == PB_DATA_TYPE.ENUM:
-			result += "ENUM::" + String(value)
+			result += "ENUM::" + str(value)
 		else:
-			result += String(value)
+			result += str(value)
 		return result
 	
 	static func field_to_string(field : PBField, nesting : int) -> String:

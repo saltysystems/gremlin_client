@@ -10,59 +10,37 @@ script = ExtResource("1_yr4dy")
 
 [node name="SALabel" type="Label" parent="."]
 layout_mode = 2
-offset_right = 335.0
-offset_bottom = 26.0
 text = "Overworld Server Address"
 
 [node name="ServerAddress" type="LineEdit" parent="."]
 layout_mode = 2
-offset_top = 30.0
-offset_right = 335.0
-offset_bottom = 61.0
 size_flags_horizontal = 3
 text = "http://localhost:4433"
 
 [node name="OLabel" type="Label" parent="."]
 layout_mode = 2
-offset_top = 65.0
-offset_right = 335.0
-offset_bottom = 91.0
 text = "Output Directory"
 
 [node name="OContainer" type="HBoxContainer" parent="."]
 layout_mode = 2
-offset_top = 95.0
-offset_right = 335.0
-offset_bottom = 126.0
 
 [node name="OutputDir" type="LineEdit" parent="OContainer"]
 layout_mode = 2
-offset_right = 309.0
-offset_bottom = 31.0
 size_flags_horizontal = 3
 text = "res://scripts"
 
 [node name="OutputButton" type="Button" parent="OContainer"]
 layout_mode = 2
-offset_left = 313.0
-offset_right = 335.0
-offset_bottom = 31.0
 text = "..."
 
 [node name="SaveProtos" type="CheckBox" parent="."]
 layout_mode = 2
-offset_top = 130.0
-offset_right = 335.0
-offset_bottom = 161.0
 tooltip_text = "Protobuf files will be saved to the output directory with your generated GDScript files"
 text = "Keep protobuf files"
 expand_icon = true
 
 [node name="CompileButton" type="Button" parent="."]
 layout_mode = 2
-offset_top = 165.0
-offset_right = 335.0
-offset_bottom = 196.0
 text = "Download & Compile!"
 
 [node name="HttpRequest" type="HTTPRequest" parent="."]

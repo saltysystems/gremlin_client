@@ -119,6 +119,7 @@ func download_items(manifest):
 
 
 func download_manifest(address: String):
+	print("Attempting to download manifest...")
 	if manifest == []: 
 		# Download the manifest
 		$HttpRequest.request(address)
@@ -171,4 +172,3 @@ func center_dialog(dialog: Node):
 func output_name(input_name: String) -> String:
 	var n = input_name.rsplit(".",false)
 	return n[0]+"_pb.gd"
-

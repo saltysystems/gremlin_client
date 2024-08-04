@@ -1,7 +1,7 @@
 #
 # BSD 3-Clause License
 #
-# Copyright (c) 2018 - 2022, Oleg Malyavkin
+# Copyright (c) 2018 - 2023, Oleg Malyavkin
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-@tool
 extends Node
+
+const PROTO_VERSION_CONST : String = "const PROTO_VERSION = "
+const PROTO_VERSION_DEFAULT : String = PROTO_VERSION_CONST + "0"
 
 class Document:
 	
@@ -570,7 +572,7 @@ class Analysis:
 		var importance : bool
 	
 	var TEMPLATE_SYNTAX : Array = [
-		self.desc_syntax,
+		Callable(self, "desc_syntax"),
 		ASD.new(TOKEN_ID.SYNTAX),
 		ASD.new(TOKEN_ID.EUQAL),
 		ASD.new(TOKEN_ID.STRING, SP.MAYBE, AR.MUST_ONE, true),
@@ -578,7 +580,7 @@ class Analysis:
 	]
 	
 	var TEMPLATE_IMPORT : Array = [
-		self.desc_import,
+		Callable(self, "desc_import"),
 		ASD.new(TOKEN_ID.IMPORT, SP.MUST),
 		ASD.new(TOKEN_ID.IMPORT_QUALIFICATION, SP.MUST, AR.MAYBE, true),
 		ASD.new(TOKEN_ID.STRING, SP.MAYBE, AR.MUST_ONE, true),
@@ -586,14 +588,14 @@ class Analysis:
 	]
 	
 	var TEMPLATE_PACKAGE : Array = [
-		self.desc_package,
+		Callable(self, "desc_package"),
 		ASD.new(TOKEN_ID.PACKAGE, SP.MUST),
 		ASD.new([TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
 		ASD.new(TOKEN_ID.SEMICOLON)
 	]
 	
 	var TEMPLATE_OPTION : Array = [
-		self.desc_option,
+		Callable(self, "desc_option"),
 		ASD.new(TOKEN_ID.OPTION, SP.MUST),
 		ASD.new([TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
 		ASD.new(TOKEN_ID.EUQAL),
@@ -602,7 +604,7 @@ class Analysis:
 	]
 	
 	var TEMPLATE_FIELD : Array = [
-		self.desc_field,
+		Callable(self, "desc_field"),
 		ASD.new(TOKEN_ID.FIELD_QUALIFICATION, SP.MUST, AR.MAYBE, true),
 		ASD.new([TOKEN_ID.SIMPLE_DATA_TYPE, TOKEN_ID.IDENT, TOKEN_ID.FULL_IDENT], SP.MAYBE, AR.OR, true),
 		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
@@ -619,7 +621,7 @@ class Analysis:
 	var TEMPLATE_FIELD_ONEOF : Array = TEMPLATE_FIELD
 	
 	var TEMPLATE_MAP_FIELD : Array = [
-		self.desc_map_field,
+		Callable(self, "desc_map_field"),
 		ASD.new(TOKEN_ID.MAP),
 		ASD.new(TOKEN_ID.BRACKET_ANGLE_LEFT),
 		ASD.new(TOKEN_ID.SIMPLE_DATA_TYPE, SP.MAYBE, AR.MUST_ONE, true),
@@ -640,7 +642,7 @@ class Analysis:
 	var TEMPLATE_MAP_FIELD_ONEOF : Array = TEMPLATE_MAP_FIELD
 	
 	var TEMPLATE_ENUM : Array = [
-		self.desc_enum,
+		Callable(self, "desc_enum"),
 		ASD.new(TOKEN_ID.ENUM, SP.MUST),
 		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
 		ASD.new(TOKEN_ID.BRACKET_CURLY_LEFT),
@@ -657,26 +659,26 @@ class Analysis:
 	]
 	
 	var TEMPLATE_MESSAGE_HEAD : Array = [
-		self.desc_message_head,
+		Callable(self, "desc_message_head"),
 		ASD.new(TOKEN_ID.MESSAGE, SP.MUST),
 		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
 		ASD.new(TOKEN_ID.BRACKET_CURLY_LEFT)
 	]
 	
 	var TEMPLATE_MESSAGE_TAIL : Array = [
-		self.desc_message_tail,
+		Callable(self, "desc_message_tail"),
 		ASD.new(TOKEN_ID.BRACKET_CURLY_RIGHT)
 	]
 	
 	var TEMPLATE_ONEOF_HEAD : Array = [
-		self.desc_oneof_head,
+		Callable(self, "desc_oneof_head"),
 		ASD.new(TOKEN_ID.ONEOF, SP.MUST),
 		ASD.new(TOKEN_ID.IDENT, SP.MAYBE, AR.MUST_ONE, true),
 		ASD.new(TOKEN_ID.BRACKET_CURLY_LEFT),
 	]
 	
 	var TEMPLATE_ONEOF_TAIL : Array = [
-		self.desc_oneof_tail,
+		Callable(self, "desc_oneof_tail"),
 		ASD.new(TOKEN_ID.BRACKET_CURLY_RIGHT)
 	]
 	
@@ -1177,9 +1179,8 @@ class Analysis:
 				public = true
 			offset += 1
 		var f_name : String = path_dir + get_text_from_token(indexed_tokens[offset].token)
-		var file : File = File.new()
-		var sha : String = file.get_sha256(f_name)
-		if file.file_exists(f_name):
+		var sha : String = FileAccess.get_sha256(f_name)
+		if FileAccess.file_exists(f_name):
 			for i in import_table:
 				if i.path == f_name:
 					result.success = false
@@ -1400,8 +1401,8 @@ class Analysis:
 				comment_space_processing(result.tokens)
 				var syntax : TranslationResult = analyze_tokens(result.tokens)
 				if !syntax.done:
-					var pos_main : Helper.TokenPosition = Helper.text_pos(result.tokens, syntax.parse_token_index)
-					var pos_inner : Helper.TokenPosition = Helper.text_pos(result.tokens, syntax.error_token_index)
+					var pos_main : TokenPosition = Helper.text_pos(result.tokens, syntax.parse_token_index)
+					var pos_inner : TokenPosition = Helper.text_pos(result.tokens, syntax.error_token_index)
 					var spos_main : Helper.StringPosition = Helper.str_pos(document.text, pos_main)
 					var spos_inner : Helper.StringPosition = Helper.str_pos(document.text, pos_inner)
 					var err_text : String = "Syntax error in construction '" + result.tokens[syntax.parse_token_index].text + "'. "
@@ -1750,11 +1751,11 @@ class Translator:
 		text += tabulate("service.field = " + field_name + "\n", nesting)
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
-				text += tabulate("service.func_ref = self.add" + field_name + "\n", nesting)
+				text += tabulate("service.func_ref = Callable(self, \"add" + field_name + "\")\n", nesting)
 			else:
-				text += tabulate("service.func_ref = self.new" + field_name + "\n", nesting)
+				text += tabulate("service.func_ref = Callable(self, \"new" + field_name + "\")\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
-			text += tabulate("service.func_ref = self.add_empty" + field_name + "\n", nesting)
+			text += tabulate("service.func_ref = Callable(self, \"add_empty" + field_name + "\")\n", nesting)
 		text += tabulate("data[" + field_name + ".tag] = service\n", nesting)
 		
 		return text
@@ -1794,10 +1795,20 @@ class Translator:
 		if f.field_type == Analysis.FIELD_TYPE.MESSAGE:
 			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
 			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
-			text += generate_has_oneof(field_index, nesting)
+			if f.qualificator != Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+				text += generate_has_oneof(field_index, nesting)
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
 			else:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
+					nesting += 1
+					text += tabulate("if _" + f.name + ".value != null:\n", nesting)
+					nesting += 1
+					text += tabulate("return true\n", nesting)
+					nesting -= 1
+					text += tabulate("return false\n", nesting)
+					nesting -= 1
 				text += tabulate("func get_" + f.name + "() -> " + the_class_name + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return _" + f.name + ".value\n", nesting)
@@ -1822,8 +1833,10 @@ class Translator:
 				text += tabulate("_" + f.name + ".value = " + the_class_name + ".new()\n", nesting)
 				text += tabulate("return _" + f.name + ".value\n", nesting)
 		elif f.field_type == Analysis.FIELD_TYPE.MAP:
-			var the_class_name : String = class_table[f.type_class_id].parent_name + "." + class_table[f.type_class_id].name
-			the_class_name = the_class_name.substr(1, the_class_name.length() - 1)
+			var the_parent_class_name : String = class_table[f.type_class_id].parent_name
+			the_parent_class_name = the_parent_class_name.substr(1, the_parent_class_name.length() - 1)
+			var the_class_name : String = the_parent_class_name + "." + class_table[f.type_class_id].name
+			
 			text += generate_has_oneof(field_index, nesting)
 			text += tabulate("func get_raw_" + f.name + "():\n", nesting)
 			nesting += 1
@@ -1835,17 +1848,18 @@ class Translator:
 			nesting -= 1
 			text += tabulate("func clear_" + f.name + "():\n", nesting)
 			nesting += 1
-			text += tabulate("data[" + String(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
+			text += tabulate("data[" + str(f.tag) + "].state = PB_SERVICE_STATE.UNFILLED\n", nesting)
 			text += tabulate("_" + f.name + ".value = " + default_dict_text() + "[" + generate_field_type(f) + "]\n", nesting)
 			nesting -= 1
 			for i in range(field_table.size()):
 				if field_table[i].parent_class_id == f.type_class_id && field_table[i].name == "value":
 					var gd_type : String = generate_gdscript_simple_type(field_table[i])
-					var return_type : String = ""
+					var return_type : String = " -> " + the_class_name
+					var value_return_type : String = ""
 					if gd_type != "":
-						return_type = " -> " + gd_type
+						value_return_type = return_type
 					elif field_table[i].field_type == Analysis.FIELD_TYPE.MESSAGE:
-						return_type = " -> " + the_class_name
+						value_return_type = " -> " + the_parent_class_name + "." + field_table[i].type_name
 					text += tabulate("func add_empty_" + f.name + "()" + return_type + ":\n", nesting)
 					nesting += 1
 					text += generate_group_clear(field_index, nesting)
@@ -1854,7 +1868,7 @@ class Translator:
 					text += tabulate("return element\n", nesting)
 					nesting -= 1
 					if field_table[i].field_type == Analysis.FIELD_TYPE.MESSAGE:
-						text += tabulate("func add_" + f.name + "(a_key)" + return_type + ":\n", nesting)
+						text += tabulate("func add_" + f.name + "(a_key)" + value_return_type + ":\n", nesting)
 						nesting += 1
 						text += generate_group_clear(field_index, nesting)
 						text += tabulate("var idx = -1\n", nesting)
@@ -1911,6 +1925,15 @@ class Translator:
 			if f.qualificator == Analysis.FIELD_QUALIFICATOR.REPEATED:
 				text += tabulate("func get_" + f.name + "() -> Array:\n", nesting)
 			else:
+				if f.qualificator == Analysis.FIELD_QUALIFICATOR.OPTIONAL:
+					text += tabulate("func has_" + f.name + "() -> bool:\n", nesting)
+					nesting += 1
+					text += tabulate("if _" + f.name + ".value != null:\n", nesting)
+					nesting += 1
+					text += tabulate("return true\n", nesting)
+					nesting -= 1
+					text += tabulate("return false\n", nesting)
+					nesting -= 1
 				text += tabulate("func get_" + f.name + "()" + return_type + ":\n", nesting)
 			nesting += 1
 			text += tabulate("return _" + f.name + ".value\n", nesting)
@@ -1979,7 +2002,7 @@ class Translator:
 	
 	func generate_class_services(nesting : int) -> String:
 		var text : String = ""
-		text += tabulate("func to_string() -> String:\n", nesting)
+		text += tabulate("func _to_string() -> String:\n", nesting)
 		nesting += 1
 		text += tabulate("return PBPacker.message_to_string(data)\n", nesting)
 		text += tabulate("\n", nesting)
@@ -2017,21 +2040,26 @@ class Translator:
 		return text
 	
 	func translate(file_name : String, core_file_name : String) -> bool:
-		var file : File = File.new()
-		if file.open(file_name, File.WRITE) < 0:
+
+		var file : FileAccess = FileAccess.open(file_name, FileAccess.WRITE)
+		if file == null:
 			printerr("File: '", file_name, "' save error.")
 			return false
-		var core_file : File = File.new()
-		if !core_file.file_exists(core_file_name):
+		
+		if !FileAccess.file_exists(core_file_name):
 			printerr("File: '", core_file_name, "' not found.")
 			return false
-		if core_file.open(core_file_name, File.READ) < 0:
+			
+		var core_file : FileAccess = FileAccess.open(core_file_name, FileAccess.READ)
+		if core_file == null:
 			printerr("File: '", core_file_name, "' read error.")
 			return false
 		var core_text : String = core_file.get_as_text()
 		core_file.close()
+		
 		var text : String = ""
 		var nesting : int = 0
+		core_text = core_text.replace(PROTO_VERSION_DEFAULT, PROTO_VERSION_CONST + str(proto_version))
 		text += core_text + "\n\n\n"
 		text += "############### USER DATA BEGIN ################\n"
 		var cls_user : String = ""
@@ -2049,7 +2077,7 @@ class Translator:
 		text += "################ USER DATA END #################\n"
 		file.store_string(text)
 		file.close()
-		if !file.file_exists(file_name):
+		if !FileAccess.file_exists(file_name):
 			printerr("File: '", file_name, "' save error.")
 			return false
 		return true
@@ -2066,16 +2094,19 @@ class ImportFile:
 	var parent_index : int
 
 func parse_all(analyzes : Dictionary, imports : Array, path : String, full_name : String, parent_index : int) -> bool:
-	var file : File = File.new()
-	if !file.file_exists(full_name):
+	
+	if !FileAccess.file_exists(full_name):
 		printerr(full_name, ": not found.")
 		return false
-	if file.open(full_name, File.READ) < 0:
+		
+	var file : FileAccess = FileAccess.open(full_name, FileAccess.READ)
+	if file == null:
 		printerr(full_name, ": read error.")
 		return false
 	var doc : Document = Document.new(full_name, file.get_as_text())
 	var sha : String = file.get_sha256(full_name)
 	file.close()
+	
 	if !analyzes.has(sha):
 		print(full_name, ": parsing.")
 		var analysis : Analysis = Analysis.new(path, doc)
@@ -2156,11 +2187,11 @@ func translate_all(analyzes : Dictionary, file_name : String, core_file_name : S
 	var keys : Array = []
 	keys.append(first_key)
 	union_imports(analyzes, first_key, analyze, keys, 0, false, false)
-	print("Perform full semantic analysis.")
+	print("Performing full semantic analysis.")
 	var semantic : Semantic = Semantic.new(analyze)
 	if !semantic.check():
 		return false
-	print("Perform translation.")
+	print("Performing translation.")
 	var translator : Translator = Translator.new(analyze)
 	if !translator.translate(file_name, core_file_name):
 		return false
@@ -2172,13 +2203,13 @@ func work(path : String, in_file : String, out_file : String, core_file : String
 	var imports : Array = []
 	var analyzes : Dictionary = {}
 	
-	print("Compile source: '", in_full_name, "', output: '", out_file, "'.")
+	print("Compiling source: '", in_full_name, "', output: '", out_file, "'.")
 	print("\n1. Parsing:")
 	if parse_all(analyzes, imports, path, in_full_name, -1):
 		print("* Parsing completed successfully. *")
 	else:
 		return false
-	print("\n2. Semantic analysis:")
+	print("\n2. Perfoming semantic analysis:")
 	if semantic_all(analyzes, imports):
 		print("* Semantic analysis completed successfully. *")
 	else:
@@ -2191,8 +2222,4 @@ func work(path : String, in_file : String, out_file : String, core_file : String
 	return true
 
 func _ready():
-	var path : String = "res://"
-	var in_file : String = "A.proto"
-	var out_file : String = "res://out.gd"
-	var core_file : String = "res://protobuf_core.gd"
-	work(path, in_file, out_file, core_file)
+	pass
