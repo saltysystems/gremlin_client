@@ -1,13 +1,10 @@
-# Overworld Client v1.0
+# Overworld Client v1.1
 
 ## About
-This Godot plugin will allow your Godot applications to download and update the
+This Godot 4.x plugin will allow your Godot applications to download and update the
 latest & greatest client bindings from your own [Overworld](https://github.com/saltysystems/overworld) server.
 
 ![Plugins](/gh-images/download-compile.png)
-
-## Godot 3.x vs Godot 4.x
-Godot 3.x is no longer supported.
 
 ## Usage
 
